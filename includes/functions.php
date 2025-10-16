@@ -140,3 +140,27 @@ function custom_oauth_sanitize_scope($scope) {
     $scopes = array_intersect($scopes, $allowed_scopes);
     return implode(' ', $scopes);
 }
+
+function custom_oauth_get_client_token_count($client_id) {
+    global $wpdb;
+    // Query to count active tokens stored in options table via transients
+    $like = $wpdb->esc_like('oauth_access_token_') . '%';
+    
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
+            $like
+        )
+    );
+    
+    $count = 0;
+    foreach ($rows as $row) {
+        $data = maybe_unserialize($row->option_value);
+        if (!empty($data['client_id']) && $data['client_id'] === $client_id) {
+            $count++;
+        }
+    }
+    
+    return $count;
+}
+
