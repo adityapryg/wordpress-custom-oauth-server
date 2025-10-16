@@ -35,7 +35,13 @@ function custom_oauth_autoloader($class_name) {
         return;
     }
     
-    $file_name = 'class-' . strtolower(str_replace('_', '-', $class_name)) . '.php';
+    // Special handling for Custom_OAuth_Server class
+    if ($class_name === 'Custom_OAuth_Server') {
+        $file_name = 'class-oauth-server.php';
+    } else {
+        $file_name = 'class-' . strtolower(str_replace('_', '-', $class_name)) . '.php';
+    }
+    
     $file_path = CUSTOM_OAUTH_INCLUDES_DIR . $file_name;
     
     if (file_exists($file_path)) {
