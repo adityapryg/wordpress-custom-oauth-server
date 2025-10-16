@@ -35,9 +35,16 @@ function custom_oauth_autoloader($class_name) {
         return;
     }
     
-    // Special handling for Custom_OAuth_Server class
-    if ($class_name === 'Custom_OAuth_Server') {
-        $file_name = 'class-oauth-server.php';
+    // Map class names to actual file names
+    $class_files = [
+        'Custom_OAuth_Server' => 'class-oauth-server.php',
+        'Custom_OAuth_Admin' => 'class-oauth-admin.php',
+        'Custom_OAuth_Api' => 'class-oauth-api.php',
+        'Custom_OAuth_List_Table' => 'class-oauth-list-table.php'
+    ];
+    
+    if (isset($class_files[$class_name])) {
+        $file_name = $class_files[$class_name];
     } else {
         $file_name = 'class-' . strtolower(str_replace('_', '-', $class_name)) . '.php';
     }
@@ -61,18 +68,32 @@ add_action('plugins_loaded', 'custom_oauth_init');
 // Activation hook
 register_activation_hook(__FILE__, 'custom_oauth_activate');
 function custom_oauth_activate() {
-    custom_oauth_init();
+    // Manually load required classes during activation
+    require_once CUSTOM_OAUTH_INCLUDES_DIR . 'functions.php';
+    require_once CUSTOM_OAUTH_INCLUDES_DIR . 'class-oauth-server.php';
+    
+    // Load dependencies that Custom_OAuth_Server might need
+    require_once CUSTOM_OAUTH_INCLUDES_DIR . 'class-oauth-admin.php';
+    require_once CUSTOM_OAUTH_INCLUDES_DIR . 'class-oauth-api.php';
+    
+    // Now we can safely call the static activation method
     Custom_OAuth_Server::activate();
 }
 
 // Deactivation hook
 register_deactivation_hook(__FILE__, 'custom_oauth_deactivate');
 function custom_oauth_deactivate() {
-    Custom_OAuth_Server::deactivate();
+    if (class_exists('Custom_OAuth_Server')) {
+        Custom_OAuth_Server::deactivate();
+    }
 }
 
 // Uninstall hook
 register_uninstall_hook(__FILE__, 'custom_oauth_uninstall');
 function custom_oauth_uninstall() {
+    // Load the class if needed for uninstall
+    if (!class_exists('Custom_OAuth_Server')) {
+        require_once CUSTOM_OAUTH_INCLUDES_DIR . 'class-oauth-server.php';
+    }
     Custom_OAuth_Server::uninstall();
 }
